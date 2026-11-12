@@ -54,17 +54,16 @@ function Auth() {
     e.preventDefault();
     setNotice('');
 
-    if (mode === 'login') {
-      if (!formData.email.trim() || !formData.signSpeakId.trim()) {
-        setNoticeType('error');
-        setNotice(t.errorLogin);
-        return;
-      }
+   if (mode === 'login') {
+  if (!formData.email.trim() || !formData.signSpeakId.trim()) {
+    setNoticeType('error');
+    setNotice(t.errorLogin);
+    return;
+  }
 
-      setNoticeType('success');
-      setNotice(t.loginSuccess);
-      return;
-    }
+  navigate('/camera');
+  return;
+}
 
     if (userType === 'Minor' && !formData.guardianName.trim()) {
       setNoticeType('error');
