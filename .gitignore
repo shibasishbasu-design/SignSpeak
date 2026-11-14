@@ -1,6 +1,52 @@
+# Node.js
 node_modules/
-dist/
+frontend/node_modules/
+frontend/dist/
+
+# Python environments
+venv/
+.venv/
+ml_env/
+tf_env/
+frontend/ml_env/
+frontend/tf_env/
+
+# Python cache
+__pycache__/
+**/__pycache__/
+*.py[cod]
+
+# Private dataset and extracted landmarks
+frontend/dataset/
+frontend/landmark_data/
+
+# Local environment files
 .env
 .env.*
 !.env.example
+
+# Logs and OS files
 *.log
+.DS_Store
+Thumbs.db
+
+# SignSpeak private dataset
+frontend/dataset/
+frontend/landmark_data/
+frontend/processed_data/
+
+# Python environments
+frontend/ml_env/
+frontend/tf_env/
+frontend/venv/
+frontend/.venv/
+
+# Generated model files
+frontend/trained_model/*.joblib
+frontend/trained_model/*.keras
+frontend/trained_model/*.h5
+
+# Python cache
+__pycache__/
+*.py[cod]
+frontend/trained_model/
