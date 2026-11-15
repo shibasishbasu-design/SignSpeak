@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import './Auth.css';
 
+const API_URL = 'http://127.0.0.1:8000';
+
 function Auth() {
   const navigate = useNavigate();
   const { authContent: t } = useLanguage();
@@ -23,6 +25,8 @@ function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const [notice, setNotice] = useState('');
   const [noticeType, setNoticeType] = useState('success');
+  const [loading, setLoading] = useState(false);
+  const [generatedId, setGeneratedId] = useState('');
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -47,53 +51,119 @@ function Auth() {
   const changeMode = (newMode) => {
     setMode(newMode);
     setNotice('');
+    setGeneratedId('');
     setShowPassword(false);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     setNotice('');
+    setGeneratedId('');
 
-   if (mode === 'login') {
-  if (!formData.email.trim() || !formData.signSpeakId.trim()) {
-    setNoticeType('error');
-    setNotice(t.errorLogin);
-    return;
-  }
+    if (mode === 'signup') {
+      if (userType === 'Minor' && !formData.guardianName.trim()) {
+        setNoticeType('error');
+        setNotice(t.errorGuardian);
+        return;
+      }
 
-  navigate('/camera');
-  return;
-}
+      if (formData.password.length < 8) {
+        setNoticeType('error');
+        setNotice(t.errorPassword);
+        return;
+      }
 
-    if (userType === 'Minor' && !formData.guardianName.trim()) {
-      setNoticeType('error');
-      setNotice(t.errorGuardian);
-      return;
+      if (formData.password !== formData.confirmPassword) {
+        setNoticeType('error');
+        setNotice(t.errorConfirm);
+        return;
+      }
     }
 
-    if (formData.password.length < 8) {
-      setNoticeType('error');
-      setNotice(t.errorPassword);
-      return;
-    }
+    setLoading(true);
 
-    if (formData.password !== formData.confirmPassword) {
-      setNoticeType('error');
-      setNotice(t.errorConfirm);
-      return;
-    }
+    try {
+      const endpoint =
+        mode === 'signup' ? '/signup' : '/login';
 
-    setNoticeType('success');
-    setNotice(t.signupSuccess);
+      const payload =
+        mode === 'signup'
+          ? {
+              fullName: formData.fullName.trim(),
+              accountType: userType,
+              guardianName: formData.guardianName.trim(),
+              email: formData.email.trim(),
+              password: formData.password
+            }
+          : {
+              email: formData.email.trim(),
+              signSpeakId: formData.signSpeakId.trim(),
+              password: formData.password
+            };
+
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          typeof data.detail === 'string'
+            ? data.detail
+            : 'Something went wrong. Please try again.'
+        );
+      }
+
+      if (mode === 'signup') {
+        setNoticeType('success');
+        setNotice(data.message || 'Account created successfully.');
+        setGeneratedId(data.signSpeakId);
+
+        setFormData((prev) => ({
+          ...prev,
+          signSpeakId: data.signSpeakId
+        }));
+      } else {
+        setNoticeType('success');
+        setNotice('Login successful! Welcome to SignSpeak.');
+
+        // Store basic user details for the current session.
+        sessionStorage.setItem(
+          'signSpeakUser',
+          JSON.stringify({
+            signSpeakId: data.signSpeakId,
+            fullName: data.fullName,
+            email: data.email,
+            accountType: data.accountType
+          })
+        );
+
+        setTimeout(() => {
+          navigate('/camera');
+        }, 700);
+      }
+    } catch (error) {
+      setNoticeType('error');
+      setNotice(
+        error.message === 'Failed to fetch'
+          ? 'Cannot connect to the SignSpeak server. Please make sure the backend is running.'
+          : error.message
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="auth-page">
 
-      {/* Navigation */}
-
       <nav className="auth-navbar">
-
         <a
           className="auth-brand"
           href="/"
@@ -118,17 +188,11 @@ function Auth() {
           <ArrowLeft size={17} />
           {t.backHome}
         </button>
-
       </nav>
-
-      {/* Main Authentication Section */}
 
       <main className="auth-container">
 
-        {/* Left Introduction Section */}
-
         <div className="auth-intro">
-
           <div className="auth-badge">
             <ShieldCheck size={15} />
             {t.secureAccess}
@@ -142,25 +206,17 @@ function Auth() {
             <span>{t.heroTitle3}</span>
           </h1>
 
-          <p>
-            {t.heroDescription}
-          </p>
+          <p>{t.heroDescription}</p>
 
           <div className="auth-trust">
             <ShieldCheck size={19} />
             {t.trust}
           </div>
-
         </div>
-
-        {/* Right Authentication Card */}
 
         <div className="auth-card">
 
-          {/* Login and Signup Tabs */}
-
           <div className="auth-tabs">
-
             <button
               type="button"
               className={mode === 'login' ? 'active' : ''}
@@ -176,13 +232,9 @@ function Auth() {
             >
               {t.signup}
             </button>
-
           </div>
 
-          {/* Heading */}
-
           <div className="auth-heading">
-
             <h2>
               {mode === 'login'
                 ? t.welcomeBack
@@ -194,18 +246,12 @@ function Auth() {
                 ? t.loginDescription
                 : t.signupDescription}
             </p>
-
           </div>
-
-          {/* Authentication Form */}
 
           <form onSubmit={handleSubmit}>
 
-            {/* Signup-only fields */}
-
             {mode === 'signup' && (
               <>
-
                 <label htmlFor="fullName">
                   {t.fullName}
                 </label>
@@ -227,12 +273,9 @@ function Auth() {
                 <label>{t.accountType}</label>
 
                 <div className="auth-role">
-
                   <button
                     type="button"
-                    className={
-                      userType === 'Minor' ? 'selected' : ''
-                    }
+                    className={userType === 'Minor' ? 'selected' : ''}
                     onClick={() => {
                       setUserType('Minor');
                       setNotice('');
@@ -243,9 +286,7 @@ function Auth() {
 
                   <button
                     type="button"
-                    className={
-                      userType === 'Major' ? 'selected' : ''
-                    }
+                    className={userType === 'Major' ? 'selected' : ''}
                     onClick={() => {
                       setUserType('Major');
                       setNotice('');
@@ -253,12 +294,10 @@ function Auth() {
                   >
                     {t.major}
                   </button>
-
                 </div>
 
                 {userType === 'Minor' && (
                   <>
-
                     <label htmlFor="guardianName">
                       {t.guardianName}
                     </label>
@@ -276,14 +315,10 @@ function Auth() {
                         required
                       />
                     </div>
-
                   </>
                 )}
-
               </>
             )}
-
-            {/* Email */}
 
             <label htmlFor="email">
               {t.email}
@@ -304,11 +339,8 @@ function Auth() {
               />
             </div>
 
-            {/* Login ID */}
-
             {mode === 'login' && (
               <>
-
                 <label htmlFor="signSpeakId">
                   {t.uniqueId}
                 </label>
@@ -326,49 +358,49 @@ function Auth() {
                     autoComplete="off"
                     required
                   />
-
                 </div>
-
               </>
             )}
 
-            {/* Signup Password */}
+            <label htmlFor="password">
+              {mode === 'signup'
+                ? t.createPassword
+                : 'Password'}
+            </label>
+
+            <div className="auth-input">
+              <Lock size={18} />
+
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder={t.passwordPlaceholder}
+                value={formData.password}
+                onChange={updateField}
+                autoComplete={
+                  mode === 'signup'
+                    ? 'new-password'
+                    : 'current-password'
+                }
+                minLength={8}
+                required
+              />
+
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={t.togglePassword}
+              >
+                {showPassword
+                  ? <EyeOff size={18} />
+                  : <Eye size={18} />}
+              </button>
+            </div>
 
             {mode === 'signup' && (
               <>
-
-                <label htmlFor="password">
-                  {t.createPassword}
-                </label>
-
-                <div className="auth-input">
-                  <Lock size={18} />
-
-                  <input
-                    id="password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder={t.passwordPlaceholder}
-                    value={formData.password}
-                    onChange={updateField}
-                    autoComplete="new-password"
-                    minLength={8}
-                    required
-                  />
-
-                  <button
-                    type="button"
-                    className="password-toggle"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={t.togglePassword}
-                  >
-                    {showPassword
-                      ? <EyeOff size={18} />
-                      : <Eye size={18} />}
-                  </button>
-
-                </div>
-
                 <label htmlFor="confirmPassword">
                   {t.confirmPassword}
                 </label>
@@ -386,17 +418,13 @@ function Auth() {
                     autoComplete="new-password"
                     required
                   />
-
                 </div>
 
                 <p className="auth-small-note">
                   {t.idNote}
                 </p>
-
               </>
             )}
-
-            {/* Feedback Message */}
 
             {notice && (
               <div
@@ -409,25 +437,35 @@ function Auth() {
               </div>
             )}
 
-            {/* Submit Button */}
+            {generatedId && (
+              <div className="auth-notice" data-type="success">
+                <strong>Your SignSpeak ID:</strong>
+                <br />
+                {generatedId}
+                <br />
+                <small>
+                  Save this ID. You will need it to log in.
+                </small>
+              </div>
+            )}
 
             <button
               className="auth-submit"
               type="submit"
+              disabled={loading}
             >
-              {mode === 'login'
-                ? t.loginButton
-                : t.signupButton}
+              {loading
+                ? 'Please wait...'
+                : mode === 'login'
+                  ? t.loginButton
+                  : t.signupButton}
 
-              <ArrowRight size={18} />
+              {!loading && <ArrowRight size={18} />}
             </button>
 
           </form>
 
-          {/* Switch Login / Signup */}
-
           <div className="auth-switch">
-
             {mode === 'login'
               ? t.noAccount
               : t.haveAccount}
@@ -440,10 +478,7 @@ function Auth() {
             >
               {mode === 'login' ? t.signup : t.login}
             </button>
-
           </div>
-
-          {/* Security Footer */}
 
           <div className="auth-security">
             <ShieldCheck size={16} />
@@ -451,10 +486,7 @@ function Auth() {
           </div>
 
         </div>
-
       </main>
-
-      {/* Footer */}
 
       <footer className="auth-footer">
         {t.footer}
