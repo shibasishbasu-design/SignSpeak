@@ -24,7 +24,7 @@ import './Camera.css';
 // 1. CONFIGURATION
 // ==========================================
 
-const API_URL = 'https://signspeak-c2o2.onrender.com';
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 const SEQUENCE_LENGTH = 60;
 const FEATURES_PER_FRAME = 126;
