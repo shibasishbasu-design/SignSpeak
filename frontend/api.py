@@ -571,14 +571,21 @@ def health():
 # 14. ORIGINAL DTW DISTANCE
 # ==========================================
 
+from scipy.spatial.distance import cdist
+
 def dtw_distance(sequence_a, sequence_b):
 
-    n = len(sequence_a)
+    # Calculate all frame-to-frame Euclidean distances
+    # in one optimised operation.
+    cost_matrix = cdist(
+        sequence_a,
+        sequence_b,
+        metric="euclidean"
+    )
 
-    m = len(sequence_b)
+    n, m = cost_matrix.shape
 
     previous = np.full(m + 1, np.inf)
-
     previous[0] = 0.0
 
     for i in range(1, n + 1):
@@ -587,27 +594,15 @@ def dtw_distance(sequence_a, sequence_b):
 
         for j in range(1, m + 1):
 
-            cost = np.linalg.norm(
-
-                sequence_a[i - 1] -
-                sequence_b[j - 1]
-
-            )
-
-            current[j] = cost + min(
-
+            current[j] = cost_matrix[i - 1, j - 1] + min(
                 previous[j],
-
                 current[j - 1],
-
                 previous[j - 1]
-
             )
 
         previous = current
 
     return previous[m] / (n + m)
-
 
 # ==========================================
 # 15. ORIGINAL SIGN PREDICTION
