@@ -24,7 +24,7 @@ import './Camera.css';
 // 1. CONFIGURATION
 // ==========================================
 
-const API_URL = 'http://127.0.0.1:8000';
+const API_URL = 'https://signspeak-c2o2.onrender.com';
 
 const SEQUENCE_LENGTH = 60;
 const FEATURES_PER_FRAME = 126;
@@ -33,8 +33,8 @@ const FRAME_INTERVAL = 50;       // 20 samples/second
 const PREDICTION_STRIDE = 10;    // Predict every 10 new frames
 
 const MIN_HAND_FRAMES = 10;
-const STABILITY_WINDOW = 5;
-const REQUIRED_VOTES = 3;
+const STABILITY_WINDOW = 3;
+const REQUIRED_VOTES = 2;
 
 
 // ==========================================
