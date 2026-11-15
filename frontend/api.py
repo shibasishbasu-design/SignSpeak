@@ -216,18 +216,19 @@ if extra_origins:
     )
 
 
+fgitrom fastapi.middleware.cors import CORSMiddleware
+
 app.add_middleware(
-
     CORSMiddleware,
-
-    allow_origins=allowed_origins,
-
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://signspeak-tan.vercel.app",
+    ],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
-
     allow_methods=["*"],
-
-    allow_headers=["*"]
-
+    allow_headers=["*"],
 )
 
 
