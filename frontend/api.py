@@ -216,7 +216,7 @@ if extra_origins:
     )
 
 
-fgitrom fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
