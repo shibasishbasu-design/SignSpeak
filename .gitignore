@@ -50,3 +50,12 @@ frontend/trained_model/*.h5
 __pycache__/
 *.py[cod]
 frontend/trained_model/
+
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+**/__pycache__/
+**/node_modules/
+**/ml_env/
+**/tf_env/
+.env
